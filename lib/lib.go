@@ -14,7 +14,7 @@ import (
 	"strings"
 )
 
-const VERSION = "2.1"
+var VERSION = "2.1"
 
 type VersionType string
 
