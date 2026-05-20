@@ -60,9 +60,14 @@ func _main(flags *flag.FlagSet, cmdArgs []string) int {
 		}
 		versionTypeStr := args[0]
 		filename = args[1]
+		versionType := bump_version.VersionType(versionTypeStr)
+		if !bump_version.ValidVersionType(versionType) {
+			fmt.Fprintf(os.Stderr, "%s\n", bump_version.InvalidVersionTypeError(versionType))
+			return 2
+		}
 
 		var err error
-		version, err = bump_version.BumpInFile(bump_version.VersionType(versionTypeStr), filename)
+		version, err = bump_version.BumpInFile(versionType, filename)
 		if err != nil {
 			os.Stderr.WriteString(err.Error() + "\n")
 			return 2

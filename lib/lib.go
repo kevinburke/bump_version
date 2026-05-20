@@ -33,6 +33,11 @@ func ValidVersionType(vtype VersionType) bool {
 	}
 }
 
+// InvalidVersionTypeError returns the standard error for an unknown VersionType.
+func InvalidVersionTypeError(vtype VersionType) error {
+	return fmt.Errorf("bump_version: invalid version type (want major/minor/patch): %q", vtype)
+}
+
 type Version struct {
 	Major int64
 	// May be "-1" to signify that this version field is unused.
@@ -150,6 +155,9 @@ func Bump(version Version, vtype VersionType) Version {
 // changeVersion takes a basic literal representing a string version, and
 // increments the version number per the given VersionType.
 func changeVersion(vtype VersionType, value string) (Version, error) {
+	if !ValidVersionType(vtype) {
+		return Version{}, InvalidVersionTypeError(vtype)
+	}
 	versionNoQuotes := strings.Replace(value, "\"", "", -1)
 	version, err := Parse(versionNoQuotes)
 	if err != nil {
@@ -215,7 +223,7 @@ func changeInFile(filename string, f func(*ast.BasicLit) error) error {
 	}
 	funcErr := f(lit)
 	if funcErr != nil && funcErr != errNoChanges {
-		return err
+		return funcErr
 	}
 	if funcErr == errNoChanges {
 		return nil

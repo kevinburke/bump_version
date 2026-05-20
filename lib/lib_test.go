@@ -1,7 +1,10 @@
 package bump_version
 
 import (
+	"os"
+	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -25,6 +28,34 @@ func TestChangeVersion(t *testing.T) {
 		if v.String() != tt.out {
 			t.Errorf("changeVersion(%s, %s): got %s, want %s", tt.vtype, tt.in, v.String(), tt.out)
 		}
+	}
+}
+
+func TestBumpInFileInvalidVersionType(t *testing.T) {
+	filename := filepath.Join(t.TempDir(), "version.go")
+	const src = "package version\n\nconst Version = \"1.2.3\"\n"
+	if err := os.WriteFile(filename, []byte(src), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("BumpInFile panicked for invalid version type: %v", r)
+		}
+	}()
+
+	_, err := BumpInFile(VersionType("ptach"), filename)
+	if err == nil {
+		t.Fatal("BumpInFile returned nil error for invalid version type")
+	}
+	if !strings.Contains(err.Error(), "invalid version type") {
+		t.Fatalf("BumpInFile error = %q, want invalid version type", err)
+	}
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(data) != src {
+		t.Fatalf("BumpInFile changed file on error:\ngot:\n%s\nwant:\n%s", data, src)
 	}
 }
 
